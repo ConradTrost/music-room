@@ -5,7 +5,8 @@ interface State {
   token: string
   tokenExpiresAt: number
   musicKit: MusicKit.MusicKitInstance | null
-  heavyRotation: HeavyRotationData[]
+  heavyRotation: MusicData[]
+  recentlyAdded: MusicData[]
   playlists: Playlist[]
   activeMusicId: string | null
   nowPlaying: NowPlaying
@@ -26,7 +27,7 @@ type Artwork = {
   width: number
   height: number
 }
-type HeavyRotationData = {
+export type MusicData = {
   href: string
   id: string
   type: string
@@ -77,6 +78,7 @@ export const useMusicStore = defineStore('music', {
     tokenExpiresAt: 0,
     musicKit: null,
     heavyRotation: [],
+    recentlyAdded: [],
     playlists: [],
     activeMusicId: null,
     nowPlaying: {
@@ -233,16 +235,22 @@ export const useMusicStore = defineStore('music', {
       console.log('playlists', data.data)
       this.playlists.push(...data.data)
     },
+    async getRecentlyAdded() {
+      const { data } = (await this.musicKit!.api.music('v1/me/library/recently-added')) as {
+        data: { data: MusicData[] }
+      }
+      this.recentlyAdded.push(...data.data)
+    },
     async getHeavyRotation() {
       const { data } = (await this.musicKit!.api.music('v1/me/history/heavy-rotation')) as {
-        data: { data: HeavyRotationData[] }
+        data: { data: MusicData[] }
       }
       this.heavyRotation.push(...data.data)
     },
     getAlbumArtwork(artwork: Artwork, size: number) {
       return artwork.url.replace(/\{[wh]\}/g, size.toString())
     },
-    async playMusic(playParams: MusicKit.PlayParameters) {
+    async playMusic(playParams: { kind: string; id: string }) {
       this.musicKit!.stop()
       console.log('playing', playParams.kind, playParams.id)
       this.activeMusicId = playParams.id
