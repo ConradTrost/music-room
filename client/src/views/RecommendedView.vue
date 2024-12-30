@@ -8,23 +8,19 @@ const musicStore = useMusicStore()
 const playerStore = usePlayerStore()
 
 onMounted(async () => {
-  await musicStore.loadHeavyRotation()
-  await musicStore.loadRecentlyAdded()
+  await musicStore.loadRecommended()
 })
 </script>
 
 <template>
   <div class="wrapper">
-    <AlbumRow
-      header="Heavy Rotation"
-      :content="musicStore.getHeavyRotation"
-      @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
-    />
-    <AlbumRow
-      header="Recently Added"
-      :content="musicStore.getRecentlyAdded"
-      @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
-    />
+    <div v-for="rec in musicStore.getRecommendations" v-bind:key="rec.id">
+      <AlbumRow
+        :header="rec.title"
+        :content="rec.relationships"
+        @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+      />
+    </div>
   </div>
 </template>
 

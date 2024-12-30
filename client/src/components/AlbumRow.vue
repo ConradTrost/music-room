@@ -3,16 +3,23 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref } from 'vue'
 
-export type Album = {
+export type Music = {
   id: string
   title: string
   artist: string
   imageUrl: string
+  kind: string
 }
 
-const props = defineProps<{ header: string; albums: Album[] }>()
+const props = defineProps<{ header: string; content: Music[] }>()
+
+type EmitType = {
+  id: string
+  kind: string
+}
+
 const emit = defineEmits<{
-  (e: 'play', id: string): void
+  (e: 'play', content: EmitType): void
 }>()
 
 const currentScroll = ref(0)
@@ -41,10 +48,10 @@ const scrollPrev = () => {
     <h4>{{ props.header }}</h4>
     <div class="scrollable-container">
       <div class="scrollable-grid" :style="{ transform: 'translateX(-' + currentScroll + 'px)' }">
-        <div v-for="(album, index) in props.albums" :key="index" class="grid-item">
-          <img @click="emit('play', album.id)" :src="album.imageUrl" />
-          <p class="title">{{ album.title }}</p>
-          <p class="artist">{{ album.artist }}</p>
+        <div v-for="(music, index) in props.content" :key="index" class="grid-item">
+          <img @click="emit('play', { id: music.id, kind: music.kind })" :src="music.imageUrl" />
+          <p class="title">{{ music.title }}</p>
+          <p class="artist">{{ music.artist || '&nbsp;' }}</p>
         </div>
       </div>
     </div>
@@ -62,7 +69,7 @@ const scrollPrev = () => {
       @click="scrollNext()"
       size="2xl"
       class="fa-icon scroller"
-      v-show="albums.length >= currentIndex + 6"
+      v-show="content.length >= currentIndex + 6"
       :icon="faChevronRight"
       style="color: #ebebeba3"
     />

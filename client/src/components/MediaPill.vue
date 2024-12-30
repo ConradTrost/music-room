@@ -1,62 +1,57 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
-import { useMusicStore } from '@/stores/music'
+import { getAlbumArtwork } from '@/stores/music'
+import { usePlayerStore } from '@/stores/player'
 import { faBackward, faForward, faPlay, faStop } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref } from 'vue'
 
 const playbackRate = ref(1)
-// const isPaused = ref(false)
 
-const musicStore = useMusicStore()
+const playerStore = usePlayerStore()
 
 const speedUp = () => {
   const audioEl = document.getElementById('apple-music-player') as any
   audioEl.playbackRate = playbackRate.value
 }
-
-// const pause = () => {
-//   musicStore.musicKit!.pause()
-//   isPaused.value = true
-// }
 </script>
 <template>
   <div id="music-pill">
     <div class="image-wrap">
-      <img :src="musicStore.getAlbumArtwork(musicStore.nowPlaying.artwork, 120)" />
+      <img :src="getAlbumArtwork(playerStore.nowPlaying.artwork, 120)" />
     </div>
     <div class="info">
-      <h4>{{ musicStore.nowPlaying.name }}</h4>
-      <b class="small">{{ musicStore.nowPlaying.artist }}</b>
+      <h4>{{ playerStore.nowPlaying.name }}</h4>
+      <b class="small">{{ playerStore.nowPlaying.artist }}</b>
       <p>
-        <span class="small">{{ musicStore.progress }} </span> /
-        <span class="small"> {{ musicStore.duration }} </span>
+        <span class="small">{{ playerStore.progress }} </span> /
+        <span class="small"> {{ playerStore.duration }} </span>
       </p>
       <input hidden type="number" v-model="playbackRate" v-on:change="speedUp" />
       <div class="controls">
         <FontAwesomeIcon
           class="fa-icon"
-          v-on:click="musicStore.prev"
+          v-on:click="playerStore.prev"
           :icon="faBackward"
           style="color: #ebebeba3"
         />
         <FontAwesomeIcon
           class="fa-icon fa-icon-center"
-          v-if="musicStore.isPlaying"
-          v-on:click="musicStore.pause"
+          v-if="playerStore.isPlaying"
+          v-on:click="playerStore.pause"
           :icon="faStop"
           style="color: #ebebeba3"
         />
         <FontAwesomeIcon
           class="fa-icon fa-icon-center"
-          v-if="!musicStore.isPlaying"
-          v-on:click="musicStore.play"
+          v-if="!playerStore.isPlaying"
+          v-on:click="playerStore.play"
           :icon="faPlay"
           style="color: #ebebeba3"
         />
         <FontAwesomeIcon
           class="fa-icon"
-          v-on:click="musicStore.next"
+          v-on:click="playerStore.next"
           :icon="faForward"
           style="color: #ebebeba3"
         />
