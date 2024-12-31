@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import Select from 'primevue/select'
+
 import { useMusicStore } from '../stores/music'
 import AlbumRow from '@/components/AlbumRow.vue'
 import { usePlayerStore } from '@/stores/player'
@@ -18,18 +20,26 @@ onMounted(async () => {
   await loadMusic()
 })
 
-const selected = ref('')
+const selected = ref(null)
+
+watch(selected, () => {
+  loadMusic(parseInt(selected.value))
+})
 </script>
 
 <template>
   <div class="wrapper">
-    <select v-model="selected" @change="loadMusic(parseInt(selected))">
-      <option disabled value="">Please select one</option>
-      <option selected>All</option>
-      <option v-for="genre in musicStore.getGenres" v-bind:key="genre.id" :value="genre.id">
-        {{ genre.attributes?.name }}
-      </option>
-    </select>
+    <div class="container">
+      <h1>Top Charts</h1>
+      <Select
+        v-model="selected"
+        :options="musicStore.genres"
+        optionLabel="attributes.name"
+        optionValue="id"
+        showClear
+        placeholder="Filter by genre"
+      />
+    </div>
     <AlbumRow
       header="Albums"
       :content="musicStore.getChartAlbums"
@@ -51,5 +61,10 @@ const selected = ref('')
 <style scoped>
 .wrapper {
   max-width: 100%;
+}
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 </style>

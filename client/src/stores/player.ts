@@ -7,7 +7,10 @@ interface State {
   nowPlaying: NowPlaying
   duration: string
   progress: string
+  currentTimeSeconds: number
+  durationSeconds: number
   isPlaying: boolean
+  queue: QueueItem[]
 }
 
 type NowPlaying = {
@@ -22,8 +25,18 @@ type Artwork = {
   width: number
   height: number
 }
+type QueueItem = {
+  id: string
+  discNumber: number
+  name: string
+  artist: string
+  durationInSeconds: number
+  albumId: string
+  albumName: string
+  artwork: Artwork
+}
 
-const formatTime = (seconds: number): string => {
+export const formatTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60)
   const remainingSeconds = Math.floor(seconds % 60)
 
@@ -45,7 +58,10 @@ export const usePlayerStore = defineStore('player', {
     },
     progress: '00:00',
     duration: '00:00',
+    currentTimeSeconds: 0,
+    durationSeconds: 0,
     isPlaying: false,
+    queue: [],
   }),
 
   getters: {
@@ -53,6 +69,11 @@ export const usePlayerStore = defineStore('player', {
       const appStore = useAppStore()
       const player = appStore.musicKit!.player
       return player.currentPlaybackProgress
+    },
+    getDurationString: (state) => formatTime(state.durationSeconds),
+    getCurrentTimeString: (state) => formatTime(state.currentTimeSeconds),
+    getProgress: (state) => {
+      return Math.floor((100 * state.currentTimeSeconds) / state.durationSeconds)
     },
   },
   actions: {
@@ -67,7 +88,10 @@ export const usePlayerStore = defineStore('player', {
             console.log('duration change', e.nowPlayingItem)
             const mediaItem = e.nowPlayingItem
             const durationInSecs = mediaItem.attributes.durationInMillis / 1000
-            this.duration = formatTime(durationInSecs)
+
+            this.durationSeconds = durationInSecs
+
+            // this.duration = formatTime(durationInSecs)
 
             this.nowPlaying = {
               id: mediaItem.id,
@@ -78,7 +102,8 @@ export const usePlayerStore = defineStore('player', {
             console.log(this.nowPlaying)
           })
           audioEl.addEventListener('timeupdate', () => {
-            this.progress = formatTime(audioEl.currentTime)
+            this.currentTimeSeconds = audioEl.currentTime
+            // this.progress = formatTime(audioEl.currentTime)
           })
         }
       }, 100)
@@ -110,7 +135,18 @@ export const usePlayerStore = defineStore('player', {
       appStore.musicKit!.stop()
       console.log('playing', playParams.kind, playParams.id)
       this.activeMusicId = playParams.id
-      await appStore.musicKit!.setQueue({ [playParams.kind]: playParams.id })
+      const queue = await appStore.musicKit!.setQueue({ [playParams.kind]: playParams.id })
+      this.queue = queue.items.map((item) => ({
+        id: item.id,
+        discNumber: item.discNumber,
+        name: item.title,
+        albumId: '',
+        albumName: item.albumName,
+        artist: item.artistName,
+        artwork: item.artwork,
+        durationInSeconds: Math.ceil(item.playbackDuration / 1000),
+      }))
+      // appStore.musicKit.changeToMediaAtIndex
       await this.play()
     },
   },

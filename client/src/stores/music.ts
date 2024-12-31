@@ -83,7 +83,7 @@ export const useMusicStore = defineStore('music', {
         title: content.attributes.name,
         artist: content.attributes.artistName,
         imageUrl: getAlbumArtwork(content.attributes.artwork, 320),
-        kind: content.type,
+        kind: 'album',
       }))
     },
     getGenres: (state) => state.genres,
