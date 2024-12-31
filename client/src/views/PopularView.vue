@@ -28,43 +28,30 @@ watch(selected, () => {
 </script>
 
 <template>
-  <div class="wrapper">
-    <div class="container">
-      <h1>Top Charts</h1>
-      <Select
-        v-model="selected"
-        :options="musicStore.genres"
-        optionLabel="attributes.name"
-        optionValue="id"
-        showClear
-        placeholder="Filter by genre"
-      />
-    </div>
-    <AlbumRow
-      header="Albums"
-      :content="musicStore.getChartAlbums"
-      @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
-    />
-    <AlbumRow
-      header="Songs"
-      :content="musicStore.getChartSongs"
-      @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
-    />
-    <AlbumRow
-      header="Playlists"
-      :content="musicStore.getChartPlaylists"
-      @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+  <div class="flex justify-between items-center max-w-screen-xl px-16">
+    <h1 class="text-2xl font-bold">Top Charts</h1>
+    <Select
+      v-model="selected"
+      :options="musicStore.genres"
+      optionLabel="attributes.name"
+      optionValue="id"
+      showClear
+      placeholder="Filter by genre"
     />
   </div>
+  <AlbumRow
+    header="Albums"
+    :content="musicStore.getChartAlbums"
+    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+  />
+  <AlbumRow
+    header="Songs"
+    :content="musicStore.getChartSongs"
+    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+  />
+  <AlbumRow
+    header="Playlists"
+    :content="musicStore.getChartPlaylists"
+    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+  />
 </template>
-
-<style scoped>
-.wrapper {
-  max-width: 100%;
-}
-.container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-</style>

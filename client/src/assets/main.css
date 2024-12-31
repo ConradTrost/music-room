@@ -7,21 +7,11 @@
 #app {
   display: flex;
   justify-content: space-between;
-  /* max-width: 1880px;
-  margin: auto; */
 }
 
 /* PrimeVue Overrides */
-/* .p-menu {
-  position: fixed;
-  height: 100vh;
-} */
 .p-slider {
-  margin: 2rem auto;
+  margin: 1.2rem auto;
   width: 100%;
 }
 /* End PrimeVue Overrides */
-
-.container {
-  padding: 0 4rem;
-}

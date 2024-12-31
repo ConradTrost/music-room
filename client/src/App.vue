@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import MediaPill from './components/MediaPill.vue'
+import { ScrollPanel } from 'primevue'
 import NavBar from '@/components/NavBar.vue'
 import { useAppStore } from './stores/app'
 import { usePlayerStore } from './stores/player'
@@ -21,12 +21,21 @@ onMounted(async () => {
   <NavBar :isUserAuthorized="appStore.isUserAuthorized" />
 
   <div id="content" v-if="appStore.isUserAuthorized">
-    <div id="inner-content">
-      <RouterView />
-    </div>
+    <ScrollPanel
+      class="w-full overflow-y-hidden"
+      style="width: 100%; margin: 1rem"
+      :dt="{
+        bar: {
+          background: '{primary.color}',
+        },
+      }"
+    >
+      <div class="max-w-screen-xl m-auto">
+        <RouterView />
+      </div>
+    </ScrollPanel>
   </div>
   <MediaPlayer />
-  <!-- <MediaPill /> -->
 </template>
 
 <style scoped>
@@ -34,14 +43,8 @@ onMounted(async () => {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 2rem;
-  /* padding: 2rem 28rem 12rem 8rem; */
   margin: 0 auto;
   font-weight: normal;
   height: 100vh;
-  overflow-y: auto;
-}
-#inner-content {
-  max-width: 1280px;
 }
 </style>

@@ -17,10 +17,15 @@ import {
   faPlay,
   faStop,
   faRotateLeft,
+  faVolumeHigh,
+  faGaugeHigh,
+  faPlus,
+  faMinus,
 } from '@fortawesome/free-solid-svg-icons'
 
 import App from './App.vue'
 import router from './router'
+import { Tooltip } from 'primevue'
 
 const app = createApp(App)
 
@@ -49,7 +54,12 @@ library.add(
   faPlay,
   faStop,
   faRotateLeft,
+  faVolumeHigh,
+  faGaugeHigh,
+  faPlus,
+  faMinus,
 )
 app.component('font-awesome-icon', FontAwesomeIcon)
+app.directive('tooltip', Tooltip)
 
 app.mount('#app')

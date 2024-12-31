@@ -13,19 +13,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="wrapper">
-    <div v-for="rec in musicStore.getRecommendations" v-bind:key="rec.id">
-      <AlbumRow
-        :header="rec.title"
-        :content="rec.relationships"
-        @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
-      />
-    </div>
+  <div v-for="rec in musicStore.getRecommendations" v-bind:key="rec.id">
+    <AlbumRow
+      :header="rec.title"
+      :content="rec.relationships"
+      @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+    />
   </div>
 </template>
-
-<style scoped>
-.wrapper {
-  max-width: 100%;
-}
-</style>

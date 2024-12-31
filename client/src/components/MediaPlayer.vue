@@ -4,7 +4,7 @@ import { getAlbumArtwork } from '@/stores/music'
 import { usePlayerStore } from '@/stores/player'
 import ProgressBar from 'primevue/progressbar'
 import Slider from 'primevue/slider'
-import { InputText } from 'primevue'
+import { InputText, Knob } from 'primevue'
 import { ref, watch } from 'vue'
 import QueueList from './QueueList.vue'
 
@@ -24,9 +24,9 @@ watch(volume, () => {
 </script>
 
 <template>
-  <div id="player" class="border-l-2 border-primary" v-if="playerStore.nowPlaying.id">
-    <div class="flex flex-col justify-center items-center p-8">
-      <div class="image-wrap">
+  <div id="player" class="border-l-2 border-black max-w-lg" v-if="playerStore.nowPlaying.id">
+    <div class="flex flex-col justify-center items-center">
+      <div class="image-wrap p-8 pb-4">
         <img :src="getAlbumArtwork(playerStore.nowPlaying.artwork, 420)" />
       </div>
       <h3>{{ playerStore.nowPlaying.name }}</h3>
@@ -64,17 +64,20 @@ watch(volume, () => {
           style="color: #ebebeba3"
         />
       </div>
-      <div class="advanced-controls">
-        <Slider v-model="volume" :step="0.01" :max="1" :min="0" />
-        <div class="playback-rate-slider flex justify-center items-center">
-          <InputText class="w-12 mr-4" v-model.number="playbackRate" />
-          <Slider v-model="playbackRate" :step="0.05" :max="2" :min="0.3" />
+      <div class="advanced-controls pb-6">
+        <div class="grid grid-cols-7 items-center justify-items-center">
+          <font-awesome-icon icon="fa fa-volume-high" style="color: #ebebeba3" />
+          <Slider class="col-span-4" v-model="volume" :step="0.01" :max="1" :min="0" />
+          <span class="col-span-2"></span>
+          <font-awesome-icon icon="fa fa-gauge-high" style="color: #ebebeba3" />
+          <Slider class="col-span-4" v-model="playbackRate" :step="0.05" :max="2" :min="0.3" />
           <font-awesome-icon
-            class="fa-icon fa-undo"
+            class="hover:scale-105 hover:cursor-pointer"
             v-on:click="playbackRate = 1"
             icon="fa fa-rotate-left"
             style="color: #ebebeba3"
           />
+          <InputText class="col-span-1 px-2 w-12" v-model.number="playbackRate" />
         </div>
       </div>
     </div>
@@ -99,7 +102,6 @@ img {
 }
 h3 {
   font-weight: 600;
-  margin-top: 1rem;
 }
 h4 {
   padding-bottom: 0.5rem;
@@ -120,18 +122,9 @@ h4 {
   margin-top: 2rem;
   width: 90%;
 }
-/* .playback-rate-slider {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-} */
 .fa-icon {
   height: 1.2rem;
   width: 1.2rem;
-}
-.fa-undo {
-  padding-left: 1.5rem;
 }
 .fa-icon-center {
   height: 1.5rem;
