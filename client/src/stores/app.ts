@@ -5,6 +5,7 @@ interface State {
   tokenExpiresAt: number
   musicKit: MusicKit.MusicKitInstance | null
   isLoaded: boolean
+  isUserAuthorized: boolean
 }
 
 export const useAppStore = defineStore('app', {
@@ -13,12 +14,13 @@ export const useAppStore = defineStore('app', {
     tokenExpiresAt: 0,
     musicKit: null,
     isLoaded: false,
+    isUserAuthorized: false,
   }),
 
   getters: {
     isTokenExpired: (state) => state.tokenExpiresAt < Date.now() / 1000,
     isMusicKitLoaded: (state) => !!state.musicKit,
-    isUserAuthorized: (state) => state.musicKit?.isAuthorized || false,
+    // isUserAuthorized: (state) => state.musicKit?.isAuthorized || false,
   },
   actions: {
     async loadTokenFromLocalStorage() {
@@ -50,6 +52,14 @@ export const useAppStore = defineStore('app', {
         console.error('MusicKit configuration failed:', err)
       }
     },
+    async loginUser() {
+      await this.musicKit?.authorize()
+      this.isUserAuthorized = true
+    },
+    async logoutUser() {
+      await this.musicKit?.unauthorize()
+      this.isUserAuthorized = false
+    },
     async loadMusicKit() {
       await this.loadTokenFromLocalStorage()
       return new Promise<void>((resolve) => {
@@ -57,6 +67,7 @@ export const useAppStore = defineStore('app', {
           console.log('musickitloaded event heard.')
           await this._configureMusicKit()
           this.isLoaded = true
+          this.isUserAuthorized = this.musicKit?.isAuthorized || false
           // this.attachEvents()
           resolve()
         })
@@ -67,6 +78,7 @@ export const useAppStore = defineStore('app', {
             if (!this.isMusicKitLoaded) {
               await this._configureMusicKit()
               this.isLoaded = true
+              this.isUserAuthorized = this.musicKit?.isAuthorized || false
               // this.attachEvents()
               resolve()
             }

@@ -91,7 +91,8 @@ export const useMusicStore = defineStore('music', {
       return state.recommendations.map((content) => ({
         id: content.id,
         title: content.attributes.title.stringForDisplay,
-        relationships: content.relationships.contents.data.map((rel) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        relationships: (content.relationships.contents as any).data.map((rel) => ({
           id: rel.id,
           title: rel.attributes.name,
           artist: rel.attributes.artistName,

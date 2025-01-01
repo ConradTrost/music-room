@@ -22,7 +22,6 @@ import {
   faPlus,
   faMinus,
 } from '@fortawesome/free-solid-svg-icons'
-
 import App from './App.vue'
 import router from './router'
 import { Tooltip } from 'primevue'

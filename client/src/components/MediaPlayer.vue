@@ -4,7 +4,7 @@ import { getAlbumArtwork } from '@/stores/music'
 import { usePlayerStore } from '@/stores/player'
 import ProgressBar from 'primevue/progressbar'
 import Slider from 'primevue/slider'
-import { InputText, Knob } from 'primevue'
+import { InputNumber, Knob } from 'primevue'
 import { ref, watch } from 'vue'
 import QueueList from './QueueList.vue'
 
@@ -77,7 +77,12 @@ watch(volume, () => {
             icon="fa fa-rotate-left"
             style="color: #ebebeba3"
           />
-          <InputText class="col-span-1 px-2 w-12" v-model.number="playbackRate" />
+          <InputNumber
+            class="col-span-1 px-2"
+            :maxFractionDigits="2"
+            v-model="playbackRate"
+            fluid
+          />
         </div>
       </div>
     </div>
