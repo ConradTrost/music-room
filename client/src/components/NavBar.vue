@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 
 import { useAppStore } from '@/stores/app'
 
+const router = useRouter()
 const appStore = useAppStore()
 
 const items = ref<MenuItem[]>([
@@ -13,6 +14,7 @@ const items = ref<MenuItem[]>([
     label: 'Home',
     icon: 'fa fa-home',
     route: '/',
+    disabled: () => !appStore.isUserAuthorized,
   },
   {
     label: 'Top Charts',
@@ -23,15 +25,18 @@ const items = ref<MenuItem[]>([
     label: 'Recommended',
     icon: 'fa fa-bolt',
     route: '/recommended',
+    disabled: () => !appStore.isUserAuthorized,
   },
   {
     label: 'Settings',
     icon: 'fa fa-gear',
-    command: () => {
+    command: async () => {
       if (appStore.isUserAuthorized) {
-        appStore.logoutUser()
+        await appStore.logoutUser()
+        router.push('/')
       } else {
-        appStore.loginUser()
+        await appStore.loginUser()
+        router.push('/')
       }
     },
   },

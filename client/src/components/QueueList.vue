@@ -3,14 +3,19 @@ import { getAlbumArtwork } from '@/stores/music'
 import { usePlayerStore } from '@/stores/player'
 import { ScrollPanel } from 'primevue'
 import { formatTime } from '@/stores/player'
+import { useAppStore } from '@/stores/app'
 
 const playerStore = usePlayerStore()
+const appStore = useAppStore()
+
+const setQueueItem = (index: number) => {
+  appStore.musicKit.changeToMediaAtIndex(index)
+}
 </script>
 
 <template>
   <ScrollPanel
     class="w-full overflow-y-hidden"
-    style="width: 100%"
     :dt="{
       bar: {
         background: '{primary.color}',
@@ -18,7 +23,7 @@ const playerStore = usePlayerStore()
     }"
   >
     <div class="flex flex-col w-full">
-      <div v-for="(item, index) in playerStore.queue" :key="index">
+      <div v-for="(item, index) in playerStore.queue" :key="index" v-on:click="setQueueItem(index)">
         <div class="grid grid-cols-7 items-center gap-4 w-full p-4 hover:bg-gray-950">
           <div class="relative col-span-1">
             <img class="rounded" :src="getAlbumArtwork(item.artwork, 90)" :alt="item.name" />

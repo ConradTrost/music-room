@@ -17,11 +17,11 @@ onMounted(async () => {
   <AlbumRow
     header="Heavy Rotation"
     :content="musicStore.getHeavyRotation"
-    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+    @play="({ id, kind }) => playerStore.setQueue({ id, kind })"
   />
   <AlbumRow
     header="Recently Added"
     :content="musicStore.getRecentlyAdded"
-    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+    @play="({ id, kind }) => playerStore.setQueue({ id, kind })"
   />
 </template>

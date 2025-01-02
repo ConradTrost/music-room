@@ -42,16 +42,16 @@ watch(selected, () => {
   <AlbumRow
     header="Albums"
     :content="musicStore.getChartAlbums"
-    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+    @play="({ id, kind }) => playerStore.setQueue({ id, kind })"
   />
   <AlbumRow
     header="Songs"
     :content="musicStore.getChartSongs"
-    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+    @play="({ id, kind }) => playerStore.setQueue({ id, kind })"
   />
   <AlbumRow
     header="Playlists"
     :content="musicStore.getChartPlaylists"
-    @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+    @play="({ id, kind }) => playerStore.setQueue({ id, kind })"
   />
 </template>

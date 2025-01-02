@@ -18,11 +18,11 @@ const speedUp = () => {
 <template>
   <div id="music-pill">
     <div class="image-wrap">
-      <img :src="getAlbumArtwork(playerStore.nowPlaying.artwork, 120)" />
+      <img :src="getAlbumArtwork(playerStore.getNowPlaying.artwork, 120)" />
     </div>
     <div class="info">
-      <h4>{{ playerStore.nowPlaying.name }}</h4>
-      <b class="small">{{ playerStore.nowPlaying.artist }}</b>
+      <h4>{{ playerStore.getNowPlaying.name }}</h4>
+      <b class="small">{{ playerStore.getNowPlaying.artist }}</b>
       <p>
         <span class="small">{{ playerStore.progress }} </span> /
         <span class="small"> {{ playerStore.duration }} </span>

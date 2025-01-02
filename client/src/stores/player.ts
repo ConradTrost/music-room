@@ -1,23 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { defineStore } from 'pinia'
 import { useAppStore } from './app'
 
 interface State {
   activeMusicId: string | null
-  nowPlaying: NowPlaying
   duration: string
   progress: string
   currentTimeSeconds: number
-  durationSeconds: number
   isPlaying: boolean
   queue: QueueItem[]
-}
-
-type NowPlaying = {
-  id: string
-  name: string
-  artist: string
-  artwork: Artwork
+  queuePosition: number
 }
 
 type Artwork = {
@@ -43,99 +34,81 @@ export const formatTime = (seconds: number): string => {
   return minutes.toString().padStart(2, '0') + ':' + remainingSeconds.toString().padStart(2, '0')
 }
 
+type PlaybackTimeChange = {
+  currentPlaybackDuration: number
+  currentPlaybackTime: number
+  currentPlaybackTimeRemaining: number
+}
+
 export const usePlayerStore = defineStore('player', {
   state: (): State => ({
     activeMusicId: null,
-    nowPlaying: {
-      id: '',
-      name: '',
-      artist: '',
-      artwork: {
-        url: '',
-        width: 0,
-        height: 0,
-      },
-    },
     progress: '00:00',
     duration: '00:00',
     currentTimeSeconds: 0,
-    durationSeconds: 0,
     isPlaying: false,
     queue: [],
+    queuePosition: 0,
   }),
 
   getters: {
     getActivePlayback: () => {
       const appStore = useAppStore()
-      const player = appStore.musicKit!.player
+      const player = appStore.musicKit.player
       return player.currentPlaybackProgress
     },
-    getDurationString: (state) => formatTime(state.durationSeconds),
+    getDurationString: (state) => formatTime(state.queue[state.queuePosition].durationInSeconds),
     getCurrentTimeString: (state) => formatTime(state.currentTimeSeconds),
     getProgress: (state) => {
-      return Math.floor((100 * state.currentTimeSeconds) / state.durationSeconds)
+      return Math.floor(
+        (100 * state.currentTimeSeconds) / state.queue[state.queuePosition].durationInSeconds,
+      )
+    },
+    getNowPlaying: (state) => {
+      return state.queue[state.queuePosition]
     },
   },
   actions: {
     attachEvents() {
       const appStore = useAppStore()
 
-      const waitForMediaPlayer = setInterval(() => {
-        const audioEl = document.getElementById('apple-music-player') as any
-        if (audioEl) {
-          clearInterval(waitForMediaPlayer)
-          appStore.musicKit!.addEventListener('playbackStateDidChange', (e: any) => {
-            console.log('duration change', e.nowPlayingItem)
-            const mediaItem = e.nowPlayingItem
-            const durationInSecs = mediaItem.attributes.durationInMillis / 1000
-
-            this.durationSeconds = durationInSecs
-
-            // this.duration = formatTime(durationInSecs)
-
-            this.nowPlaying = {
-              id: mediaItem.id,
-              name: mediaItem.attributes.name,
-              artist: mediaItem.attributes.artistName,
-              artwork: mediaItem.attributes.artwork,
-            }
-            console.log(this.nowPlaying)
-          })
-          audioEl.addEventListener('timeupdate', () => {
-            this.currentTimeSeconds = audioEl.currentTime
-            // this.progress = formatTime(audioEl.currentTime)
-          })
+      appStore.musicKit.addEventListener(
+        'queuePositionDidChange',
+        (e: { position: number; oldPosition: number }) => {
+          this.queuePosition = e.position
+        },
+      )
+      appStore.musicKit.addEventListener('playbackTimeDidChange', (e: PlaybackTimeChange) => {
+        if (this.currentTimeSeconds != e.currentPlaybackTime) {
+          this.currentTimeSeconds = e.currentPlaybackTime
         }
-      }, 100)
+      })
     },
     pause() {
       const appStore = useAppStore()
-      console.log('pausing')
-      appStore.musicKit!.pause()
+      appStore.musicKit.pause()
       this.isPlaying = false
     },
     async play() {
       const appStore = useAppStore()
-      console.log('playing')
-      appStore.musicKit!.play()
+      appStore.musicKit.play()
       this.isPlaying = true
     },
     async next() {
       const appStore = useAppStore()
-      await appStore.musicKit!.skipToNextItem()
+      await appStore.musicKit.skipToNextItem()
       this.isPlaying = true
     },
     async prev() {
       const appStore = useAppStore()
-      await appStore.musicKit!.skipToPreviousItem()
+      await appStore.musicKit.skipToPreviousItem()
       this.isPlaying = true
     },
-    async playMusic(playParams: { kind: string; id: string }) {
+    async setQueue(playParams: { kind: string; id: string }) {
       const appStore = useAppStore()
-      appStore.musicKit!.stop()
-      console.log('playing', playParams.kind, playParams.id)
+      appStore.musicKit.stop()
       this.activeMusicId = playParams.id
-      const queue = await appStore.musicKit!.setQueue({ [playParams.kind]: playParams.id })
+      const queue = await appStore.musicKit.setQueue({ [playParams.kind]: playParams.id })
       this.queue = queue.items.map((item) => ({
         id: item.id,
         discNumber: item.discNumber,
@@ -146,7 +119,6 @@ export const usePlayerStore = defineStore('player', {
         artwork: item.artwork,
         durationInSeconds: Math.ceil(item.playbackDuration / 1000),
       }))
-      // appStore.musicKit.changeToMediaAtIndex
       await this.play()
     },
   },

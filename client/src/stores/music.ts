@@ -91,8 +91,9 @@ export const useMusicStore = defineStore('music', {
       return state.recommendations.map((content) => ({
         id: content.id,
         title: content.attributes.title.stringForDisplay,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        relationships: (content.relationships.contents as any).data.map((rel) => ({
+        relationships: (
+          content.relationships.contents as unknown as MusicKit.Relationship<MusicKit.Resource>
+        ).data.map((rel) => ({
           id: rel.id,
           title: rel.attributes.name,
           artist: rel.attributes.artistName,
@@ -105,16 +106,15 @@ export const useMusicStore = defineStore('music', {
   actions: {
     async loadRecommended() {
       const appStore = useAppStore()
-      const { data } = (await appStore.musicKit!.api.music(
+      const { data } = (await appStore.musicKit.api.music(
         `v1/me/recommendations`,
       )) as MusicRecommendations
-      console.log(data)
       this.recommendations = data.data
     },
     async loadChartAlbums(genreId?: number) {
       const appStore = useAppStore()
       const genreFilter = genreId ? `&genre=${genreId}` : ''
-      const res = (await appStore.musicKit!.api.music(
+      const res = (await appStore.musicKit.api.music(
         `v1/catalog/us/charts?types=albums${genreFilter}`,
       )) as MusicChartApiResponse<ChartAlbum>
       this.chartAlbums = res.data.results.albums[0].data
@@ -122,35 +122,35 @@ export const useMusicStore = defineStore('music', {
     async loadChartSongs(genreId?: number) {
       const appStore = useAppStore()
       const genreFilter = genreId ? `&genre=${genreId}` : ''
-      const res = (await appStore.musicKit!.api.music(
+      const res = (await appStore.musicKit.api.music(
         `v1/catalog/us/charts?types=songs${genreFilter}`,
       )) as MusicChartApiResponse<ChartSong>
       this.chartSongs = res.data.results.songs[0].data
     },
     async loadChartPlaylists() {
       const appStore = useAppStore()
-      const res = (await appStore.musicKit!.api.music(
+      const res = (await appStore.musicKit.api.music(
         `v1/catalog/us/charts?types=playlists`,
       )) as MusicChartApiResponse<ChartPlaylist>
       this.chartPlaylists = res.data.results.playlists[0].data
     },
     async loadRecentlyAdded() {
       const appStore = useAppStore()
-      const { data } = (await appStore.musicKit!.api.music('v1/me/library/recently-added')) as {
+      const { data } = (await appStore.musicKit.api.music('v1/me/library/recently-added')) as {
         data: { data: MusicData[] }
       }
       this.recentlyAdded.push(...data.data)
     },
     async loadHeavyRotation() {
       const appStore = useAppStore()
-      const { data } = (await appStore.musicKit!.api.music('v1/me/history/heavy-rotation')) as {
+      const { data } = (await appStore.musicKit.api.music('v1/me/history/heavy-rotation')) as {
         data: { data: MusicData[] }
       }
       this.heavyRotation.push(...data.data)
     },
     async loadGenres() {
       const appStore = useAppStore()
-      const { data } = (await appStore.musicKit!.api.music(
+      const { data } = (await appStore.musicKit.api.music(
         'v1/catalog/us/genres',
       )) as MusicGenresApiResponse
       this.genres = data.data

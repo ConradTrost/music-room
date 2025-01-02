@@ -17,7 +17,7 @@ onMounted(async () => {
     <AlbumRow
       :header="rec.title"
       :content="rec.relationships"
-      @play="({ id, kind }) => playerStore.playMusic({ id, kind })"
+      @play="({ id, kind }) => playerStore.setQueue({ id, kind })"
     />
   </div>
 </template>

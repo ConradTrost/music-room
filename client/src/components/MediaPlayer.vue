@@ -1,11 +1,10 @@
-<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
 import { getAlbumArtwork } from '@/stores/music'
 import { usePlayerStore } from '@/stores/player'
 import ProgressBar from 'primevue/progressbar'
 import Slider from 'primevue/slider'
-import { InputNumber, Knob } from 'primevue'
-import { ref, watch } from 'vue'
+import { InputNumber } from 'primevue'
+import { onMounted, ref, watch } from 'vue'
 import QueueList from './QueueList.vue'
 
 const playerStore = usePlayerStore()
@@ -14,23 +13,31 @@ const volume = ref(1)
 const playbackRate = ref(1)
 
 watch(playbackRate, () => {
-  const audioEl = document.getElementById('apple-music-player') as any
+  const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
   audioEl.playbackRate = playbackRate.value
 })
 watch(volume, () => {
-  const audioEl = document.getElementById('apple-music-player') as any
+  const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
   audioEl.volume = volume.value
+})
+
+onMounted(() => {
+  playerStore.attachEvents()
 })
 </script>
 
 <template>
-  <div id="player" class="border-l-2 border-black max-w-lg" v-if="playerStore.nowPlaying.id">
+  <div
+    id="player"
+    class="border-l-2 border-black max-w-sm 2xl:max-w-lg"
+    v-if="playerStore.queue.length"
+  >
     <div class="flex flex-col justify-center items-center">
       <div class="image-wrap p-8 pb-4">
-        <img :src="getAlbumArtwork(playerStore.nowPlaying.artwork, 420)" />
+        <img :src="getAlbumArtwork(playerStore.getNowPlaying.artwork, 420)" />
       </div>
-      <h3>{{ playerStore.nowPlaying.name }}</h3>
-      <h4>{{ playerStore.nowPlaying.artist }}</h4>
+      <h3>{{ playerStore.getNowPlaying.name }}</h3>
+      <h4>{{ playerStore.getNowPlaying.artist }}</h4>
       <p>{{ playerStore.getCurrentTimeString }} / {{ playerStore.getDurationString }}</p>
       <div class="progress-wrapper">
         <ProgressBar :showValue="false" :value="playerStore.getProgress" />
@@ -94,7 +101,7 @@ watch(volume, () => {
 #player {
   /* position: fixed; */
   /* width: 30vw; */
-  min-width: 20vw;
+  /* min-width: 20vw; */
   height: 100vh;
   display: flex;
   flex-direction: column;

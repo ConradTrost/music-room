@@ -3,8 +3,7 @@ import { defineStore } from 'pinia'
 interface State {
   token: string
   tokenExpiresAt: number
-  musicKit: MusicKit.MusicKitInstance | null
-  isLoaded: boolean
+  musicKit: MusicKit.MusicKitInstance
   isUserAuthorized: boolean
 }
 
@@ -13,14 +12,12 @@ export const useAppStore = defineStore('app', {
     token: '',
     tokenExpiresAt: 0,
     musicKit: null,
-    isLoaded: false,
     isUserAuthorized: false,
   }),
 
   getters: {
     isTokenExpired: (state) => state.tokenExpiresAt < Date.now() / 1000,
     isMusicKitLoaded: (state) => !!state.musicKit,
-    // isUserAuthorized: (state) => state.musicKit?.isAuthorized || false,
   },
   actions: {
     async loadTokenFromLocalStorage() {
@@ -28,7 +25,7 @@ export const useAppStore = defineStore('app', {
       const expiresAtStr = localStorage.getItem('developerTokenExpiresAt') || '0'
       this.tokenExpiresAt = parseInt(expiresAtStr)
       if (!this.isTokenExpired) return
-      const data = await fetch('http://localhost:8080/token')
+      const data = await fetch(import.meta.env.VITE_DEVELOPER_TOKEN_URL)
       const { token, expiresAt } = (await data.json()) as { token: string; expiresAt: number }
 
       localStorage.setItem('developerToken', token)
@@ -48,38 +45,33 @@ export const useAppStore = defineStore('app', {
           },
         })
         this.musicKit = window.MusicKit.getInstance()
+        this.isUserAuthorized = this.musicKit.isAuthorized || false
+        console.log('isUserAuthorized:', this.isUserAuthorized)
       } catch (err) {
         console.error('MusicKit configuration failed:', err)
       }
     },
     async loginUser() {
-      await this.musicKit?.authorize()
+      await this.musicKit.authorize()
       this.isUserAuthorized = true
     },
     async logoutUser() {
-      await this.musicKit?.unauthorize()
+      await this.musicKit.unauthorize()
       this.isUserAuthorized = false
     },
     async loadMusicKit() {
       await this.loadTokenFromLocalStorage()
       return new Promise<void>((resolve) => {
         document.addEventListener('musickitloaded', async () => {
-          console.log('musickitloaded event heard.')
           await this._configureMusicKit()
-          this.isLoaded = true
-          this.isUserAuthorized = this.musicKit?.isAuthorized || false
-          // this.attachEvents()
           resolve()
         })
-        // Fallback if musickitloaded is missed
+        // Fallback if musickitloaded event is missed
         const checkMusicKitLoaded = setInterval(async () => {
           if (window.MusicKit) {
             clearInterval(checkMusicKitLoaded)
             if (!this.isMusicKitLoaded) {
               await this._configureMusicKit()
-              this.isLoaded = true
-              this.isUserAuthorized = this.musicKit?.isAuthorized || false
-              // this.attachEvents()
               resolve()
             }
           }

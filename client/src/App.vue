@@ -3,27 +3,23 @@ import { RouterView } from 'vue-router'
 import { ScrollPanel } from 'primevue'
 import NavBar from '@/components/NavBar.vue'
 import { useAppStore } from './stores/app'
-import { usePlayerStore } from './stores/player'
 import { onMounted } from 'vue'
 import MediaPlayer from './components/MediaPlayer.vue'
 
-const playerStore = usePlayerStore()
 const appStore = useAppStore()
 
 onMounted(async () => {
   await appStore.loadMusicKit()
-  console.log('music kit loaded prob')
-  playerStore.attachEvents()
 })
 </script>
 
 <template>
-  <NavBar :isUserAuthorized="appStore.isUserAuthorized" />
+  <div class="flex w-screen" v-if="appStore.isMusicKitLoaded">
+    <NavBar />
 
-  <div id="content" v-if="appStore.isUserAuthorized">
     <ScrollPanel
-      class="w-full overflow-y-hidden"
-      style="width: 100%; margin: 1rem"
+      id="content"
+      class="grow overflow-hidden"
       :dt="{
         bar: {
           background: '{primary.color}',
@@ -34,8 +30,8 @@ onMounted(async () => {
         <RouterView />
       </div>
     </ScrollPanel>
+    <MediaPlayer class="shrink" />
   </div>
-  <MediaPlayer />
 </template>
 
 <style scoped>
