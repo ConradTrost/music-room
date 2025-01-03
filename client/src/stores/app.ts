@@ -39,6 +39,7 @@ export const useAppStore = defineStore('app', {
         console.log('Configuring MusicKit...')
         await MusicKit.configure({
           developerToken: this.token,
+          bitrate: MusicKit.PlaybackBitrate.HIGH,
           app: {
             name: 'Trost Dev Apple Music API',
             build: '0.0.1',

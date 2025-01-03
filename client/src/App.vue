@@ -5,8 +5,10 @@ import NavBar from '@/components/NavBar.vue'
 import { useAppStore } from './stores/app'
 import { onMounted } from 'vue'
 import MediaPlayer from './components/MediaPlayer.vue'
+import { usePlayerStore } from './stores/player'
 
 const appStore = useAppStore()
+const playerStore = usePlayerStore()
 
 onMounted(async () => {
   await appStore.loadMusicKit()
@@ -30,7 +32,7 @@ onMounted(async () => {
         <RouterView />
       </div>
     </ScrollPanel>
-    <MediaPlayer class="shrink" />
+    <MediaPlayer v-if="playerStore.queue.length" class="shrink" />
   </div>
 </template>
 

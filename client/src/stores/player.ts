@@ -71,7 +71,6 @@ export const usePlayerStore = defineStore('player', {
   actions: {
     attachEvents() {
       const appStore = useAppStore()
-
       appStore.musicKit.addEventListener(
         'queuePositionDidChange',
         (e: { position: number; oldPosition: number }) => {
