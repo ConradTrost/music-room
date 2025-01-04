@@ -3,12 +3,17 @@ import { useAppStore } from './app'
 
 interface State {
   activeMusicId: string | null
-  duration: string
-  progress: string
+  isSeeking: boolean
+  currentSeekTimeSeconds: number
   currentTimeSeconds: number
+  currentDurationSeconds: number
   isPlaying: boolean
   queue: QueueItem[]
   queuePosition: number
+  audioSourceNode: MediaElementAudioSourceNode
+  audioContext: AudioContext
+  audioNodeLoaded: boolean
+  audioAnalyser: AnalyserNode
 }
 
 type Artwork = {
@@ -43,12 +48,17 @@ type PlaybackTimeChange = {
 export const usePlayerStore = defineStore('player', {
   state: (): State => ({
     activeMusicId: null,
-    progress: '00:00',
-    duration: '00:00',
+    isSeeking: false,
+    currentSeekTimeSeconds: 0,
     currentTimeSeconds: 0,
+    currentDurationSeconds: 0,
     isPlaying: false,
     queue: [],
     queuePosition: 0,
+    audioSourceNode: null,
+    audioContext: new AudioContext(),
+    audioAnalyser: null,
+    audioNodeLoaded: false,
   }),
 
   getters: {
@@ -58,11 +68,18 @@ export const usePlayerStore = defineStore('player', {
       return player.currentPlaybackProgress
     },
     getDurationString: (state) => formatTime(state.queue[state.queuePosition].durationInSeconds),
+    getCurrentSeekTimeString: (state) => formatTime(state.currentSeekTimeSeconds),
     getCurrentTimeString: (state) => formatTime(state.currentTimeSeconds),
     getProgress: (state) => {
-      return Math.floor(
-        (100 * state.currentTimeSeconds) / state.queue[state.queuePosition].durationInSeconds,
-      )
+      let currTime = state.currentTimeSeconds
+      if (state.isSeeking) {
+        currTime = state.currentSeekTimeSeconds
+      }
+
+      const progress =
+        Math.round((100 * currTime) / state.queue[state.queuePosition].durationInSeconds) / 100
+
+      return Math.max(Math.min(progress, 1), 0)
     },
     getNowPlaying: (state) => {
       return state.queue[state.queuePosition]
@@ -71,10 +88,29 @@ export const usePlayerStore = defineStore('player', {
   actions: {
     attachEvents() {
       const appStore = useAppStore()
+
+      const attachSourceNode = setInterval(() => {
+        const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
+        if (audioEl) {
+          clearInterval(attachSourceNode)
+
+          if (!this.audioSourceNode) {
+            audioEl.crossOrigin = 'anonymous'
+            this.audioSourceNode = this.audioContext.createMediaElementSource(audioEl)
+            this.audioAnalyser = this.audioContext.createAnalyser()
+            this.audioAnalyser.fftSize = 512
+            this.audioSourceNode.connect(this.audioAnalyser)
+            this.audioAnalyser.connect(this.audioContext.destination)
+            this.audioNodeLoaded = true
+          }
+        }
+      }, 100)
+
       appStore.musicKit.addEventListener(
         'queuePositionDidChange',
         (e: { position: number; oldPosition: number }) => {
           this.queuePosition = e.position
+          this.currentDurationSeconds = this.queue[e.position].durationInSeconds
         },
       )
       appStore.musicKit.addEventListener('playbackTimeDidChange', (e: PlaybackTimeChange) => {
@@ -82,6 +118,19 @@ export const usePlayerStore = defineStore('player', {
           this.currentTimeSeconds = e.currentPlaybackTime
         }
       })
+    },
+    startSeek(timeInSeconds: number) {
+      this.isSeeking = true
+      this.currentSeekTimeSeconds = timeInSeconds
+    },
+    stopSeek() {
+      this.isSeeking = false
+      this.currentSeekTimeSeconds = 0
+    },
+    async seek() {
+      const appStore = useAppStore()
+      await appStore.musicKit.seekToTime(this.currentSeekTimeSeconds)
+      this.stopSeek()
     },
     pause() {
       const appStore = useAppStore()

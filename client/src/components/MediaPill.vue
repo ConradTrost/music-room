@@ -24,8 +24,12 @@ const speedUp = () => {
       <h4>{{ playerStore.getNowPlaying.name }}</h4>
       <b class="small">{{ playerStore.getNowPlaying.artist }}</b>
       <p>
-        <span class="small">{{ playerStore.progress }} </span> /
-        <span class="small"> {{ playerStore.duration }} </span>
+        {{
+          playerStore.isSeeking
+            ? playerStore.getCurrentSeekTimeString
+            : playerStore.getCurrentTimeString
+        }}
+        / {{ playerStore.getDurationString }}
       </p>
       <input hidden type="number" v-model="playbackRate" v-on:change="speedUp" />
       <div class="controls">

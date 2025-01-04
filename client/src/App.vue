@@ -12,6 +12,7 @@ const playerStore = usePlayerStore()
 
 onMounted(async () => {
   await appStore.loadMusicKit()
+  playerStore.attachEvents()
 })
 </script>
 
@@ -32,7 +33,7 @@ onMounted(async () => {
         <RouterView />
       </div>
     </ScrollPanel>
-    <MediaPlayer v-if="playerStore.queue.length" class="shrink" />
+    <MediaPlayer v-if="playerStore.audioNodeLoaded" class="shrink" />
   </div>
 </template>
 

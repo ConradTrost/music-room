@@ -25,6 +25,7 @@ interface State {
 
 // todo move to util
 export const getAlbumArtwork = (artwork: Artwork, size: number) => {
+  if (!artwork || !artwork.url) return ''
   return artwork.url.replace(/\{[wh]\}/g, size.toString())
 }
 

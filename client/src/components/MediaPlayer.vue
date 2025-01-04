@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { usePlayerStore } from '@/stores/player'
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import ProgressBar from 'primevue/progressbar'
 import Slider from 'primevue/slider'
 import { InputNumber } from 'primevue'
 import QueueList from './QueueList.vue'
+import ProgressBar from './ProgressBar.vue'
 import { getAlbumArtwork } from '@/stores/music'
 
 const volume = ref(1)
@@ -12,144 +12,32 @@ const playbackRate = ref(1)
 const visualizer = ref<HTMLCanvasElement | null>(null)
 const isHidden = ref(false)
 
-let audioContext: AudioContext | null = null
-let analyser: AnalyserNode | null = null
-let sourceNode: MediaElementAudioSourceNode | null = null
 let ctx: CanvasRenderingContext2D | null = null
 
-const draw = (frequencyData: Uint8Array) => {
-  if (ctx) {
-    ctx.clearRect(0, 0, visualizer.value.width, visualizer.value.height)
-    const barWidth = visualizer.value.width / frequencyData.length
-    frequencyData.forEach((value, index) => {
-      const barHeight = (value / 255) * visualizer.value.height
-      ctx.fillStyle = 'rgb(0, 0, 0)'
-      ctx.fillRect(index * barWidth, visualizer.value.height - barHeight, barWidth, barHeight)
-    })
-  }
-}
-
-const drawWaveform = (waveformData) => {
-  if (ctx) {
-    ctx.clearRect(0, 0, visualizer.value?.width ?? 0, visualizer.value?.height ?? 0)
-
-    const grad = ctx.createLinearGradient(0, 0, 280, 0)
-    grad.addColorStop(0, 'lightblue')
-    grad.addColorStop(1, 'darkblue')
-
-    ctx.lineWidth = 10
-    ctx.strokeStyle = grad
-    ctx.beginPath()
-
-    // Calculate the center of the canvas
-    const centerY = (visualizer.value?.height ?? 0) / 2
-    const width = visualizer.value?.width ?? 0
-    const sliceWidth = width / waveformData.length
-
-    let x = 0
-    waveformData.forEach((value) => {
-      const y = centerY + value * centerY // Normalize the amplitude to canvas height
-      if (x === 0) {
-        ctx.moveTo(x, y)
-      } else {
-        ctx.lineTo(x, y)
-      }
-      x += sliceWidth
-    })
-
-    ctx.stroke()
-  }
-}
-
 const drawLogarithmicFrequency = (frequencyData) => {
-  if (ctx) {
-    ctx.clearRect(0, 0, visualizer.value?.width ?? 0, visualizer.value?.height ?? 0)
+  const width = visualizer.value?.width ?? 0
+  const height = visualizer.value?.height ?? 0
 
-    const width = visualizer.value?.width ?? 0
-    const height = visualizer.value?.height ?? 0
-    const barCount = 512 // Number of bars to draw
-    const barWidth = width / barCount
+  ctx.clearRect(0, 0, width, height)
 
-    for (let i = 0; i < barCount; i++) {
-      const logIndex = Math.pow(i / barCount, 2) * (frequencyData.length - 1)
-      const leftBin = Math.floor(logIndex)
-      const rightBin = Math.ceil(logIndex)
-      const binFraction = logIndex - leftBin
+  const barCount = 256
+  const barWidth = width / barCount
 
-      // Interpolate between bins for smoother transitions
-      const value =
-        (1 - binFraction) * frequencyData[leftBin] + binFraction * frequencyData[rightBin]
+  for (let i = 0; i < barCount; i++) {
+    const logIndex = Math.pow(i / barCount, 2) * (frequencyData.length - 1)
+    const leftBin = Math.floor(logIndex)
+    const rightBin = Math.ceil(logIndex)
+    const binFraction = logIndex - leftBin
 
-      const barHeight = (value / 255) * height // Normalize the bar height
+    // Interpolate between bins for smoother transitions
+    const value = (1 - binFraction) * frequencyData[leftBin] + binFraction * frequencyData[rightBin]
 
-      const newValue = value / 4
-      ctx.fillStyle = `rgb(${newValue}, ${newValue}, ${newValue})`
-      ctx.fillRect(i * barWidth, height - barHeight, barWidth, barHeight)
-    }
+    const barHeight = (value / 255) * height // Normalize the bar height
+
+    const colorValue = value / 4
+    ctx.fillStyle = `rgb(${colorValue}, ${colorValue}, ${colorValue})`
+    ctx.fillRect(i * barWidth, height - barHeight, barWidth, barHeight)
   }
-}
-
-let lastBeatTime = 0
-const beatDebounceTime = 300
-
-const detectBeat = (waveformData) => {
-  const rms = Math.sqrt(
-    waveformData.reduce((sum, value) => sum + value * value, 0) / waveformData.length,
-  )
-
-  const beatThreshold = 0.4
-  const currentTime = Date.now()
-  if (rms > beatThreshold && currentTime - lastBeatTime > beatDebounceTime) {
-    lastBeatTime = currentTime
-    return true
-  }
-  return false
-}
-
-const visualize = () => {
-  isHidden.value = true
-  const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
-
-  if (!audioEl || !visualizer.value) return
-
-  audioEl.crossOrigin = 'anonymous'
-
-  if (!audioContext) {
-    audioContext = new AudioContext()
-    analyser = audioContext.createAnalyser()
-    analyser.fftSize = 1024 // Adjust for detail level
-    sourceNode = audioContext.createMediaElementSource(audioEl)
-    sourceNode.connect(analyser)
-    analyser.connect(audioContext.destination)
-    ctx = visualizer.value.getContext('2d')
-  }
-
-  const frequencyData = new Uint8Array(analyser.frequencyBinCount)
-  const updateVisualization = () => {
-    analyser?.getByteFrequencyData(frequencyData)
-    drawLogarithmicFrequency(frequencyData)
-
-    requestAnimationFrame(updateVisualization)
-  }
-
-  const waveformData = new Float32Array(analyser.fftSize)
-  const canvas = document.getElementById('beatbox')
-
-  const beatVisualization = () => {
-    analyser.getFloatTimeDomainData(waveformData)
-    const isBeat = detectBeat(waveformData)
-
-    if (isBeat) {
-      canvas.style.transform = 'scale(1.02)'
-    } else {
-      canvas.style.transform = 'scale(1)'
-    }
-    requestAnimationFrame(beatVisualization)
-  }
-
-  beatVisualization()
-
-  updateVisualization()
 }
 
 watch(playbackRate, (newRate) => {
@@ -165,13 +53,34 @@ watch(volume, (newVolume) => {
 const playerStore = usePlayerStore()
 
 onMounted(() => {
-  playerStore.attachEvents()
-  setTimeout(() => visualize(), 200)
+  isHidden.value = true
+  ctx = visualizer.value.getContext('2d')
+
+  // subtracting 40 due to missing high end frequencies
+  const frequencyData = new Uint8Array(playerStore.audioAnalyser.frequencyBinCount - 40) // 256
+
+  const albumImg = document.getElementById('album-cover')
+  console.log(visualizer.value)
+  const updateVisualization = () => {
+    if (visualizer.value) {
+      if (!visualizer.value.width || !visualizer.value.height) {
+        visualizer.value.width = albumImg.clientWidth
+        visualizer.value.height = albumImg.clientHeight / 9
+      }
+      playerStore.audioAnalyser?.getByteFrequencyData(frequencyData) // values between 0 and 255
+
+      drawLogarithmicFrequency(frequencyData)
+    }
+
+    requestAnimationFrame(updateVisualization)
+  }
+
+  updateVisualization()
 })
 
 onBeforeUnmount(() => {
-  if (audioContext) {
-    audioContext.close()
+  if (playerStore.audioContext.state !== 'closed') {
+    playerStore.audioContext.close()
   }
 })
 </script>
@@ -179,7 +88,7 @@ onBeforeUnmount(() => {
 <template>
   <div id="player" class="border-l-2 border-black max-w-sm 2xl:max-w-lg">
     <div class="flex flex-col justify-center items-center">
-      <div class="relative image-wrap m-8 mb-4" id="beatbox">
+      <div class="relative image-wrap m-8 mb-4 overflow-hidden" id="beatbox">
         <canvas
           class="absolute bottom-0 rounded-lg"
           ref="visualizer"
@@ -187,17 +96,22 @@ onBeforeUnmount(() => {
           height="40"
         ></canvas>
         <img
+          id="album-cover"
           class="rounded-lg"
-          v-on:click="visualize"
           :src="getAlbumArtwork(playerStore.getNowPlaying.artwork, 420)"
         />
       </div>
       <h3>{{ playerStore.getNowPlaying.name }}</h3>
       <h4>{{ playerStore.getNowPlaying.artist }}</h4>
-      <p>{{ playerStore.getCurrentTimeString }} / {{ playerStore.getDurationString }}</p>
-      <div class="progress-wrapper">
-        <ProgressBar :showValue="false" :value="playerStore.getProgress" />
-      </div>
+      <p>
+        {{
+          playerStore.isSeeking
+            ? playerStore.getCurrentSeekTimeString
+            : playerStore.getCurrentTimeString
+        }}
+        / {{ playerStore.getDurationString }}
+      </p>
+      <ProgressBar v-if="playerStore.audioNodeLoaded" class="h-16 w-9/12" />
 
       <div class="controls">
         <font-awesome-icon
@@ -230,7 +144,14 @@ onBeforeUnmount(() => {
       <div class="advanced-controls pb-6">
         <div class="grid grid-cols-7 items-center justify-items-center">
           <font-awesome-icon icon="fa fa-volume-high" style="color: #ebebeba3" />
-          <Slider class="col-span-4" v-model="volume" :step="0.01" :max="1" :min="0" />
+          <Slider
+            id="volume-slider"
+            class="col-span-4"
+            v-model="volume"
+            :step="0.01"
+            :max="1"
+            :min="0"
+          />
           <span class="col-span-2"></span>
           <font-awesome-icon icon="fa fa-gauge-high" style="color: #ebebeba3" />
           <Slider class="col-span-4" v-model="playbackRate" :step="0.05" :max="2" :min="0.3" />
@@ -255,29 +176,18 @@ onBeforeUnmount(() => {
 
 <style scoped>
 #player {
-  /* position: fixed; */
-  /* width: 30vw; */
-  /* min-width: 20vw; */
   height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: start;
-  /* padding: 2rem; */
 }
-/* img {
-  border-radius: 1rem;
-} */
 h3 {
   font-weight: 600;
 }
 h4 {
   padding-bottom: 0.5rem;
   color: #ebebeba3;
-}
-.progress-wrapper {
-  padding-top: 0.5rem;
-  width: 80%;
 }
 .controls {
   padding-top: 1rem;
