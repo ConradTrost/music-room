@@ -7,6 +7,8 @@ interface State {
   currentSeekTimeSeconds: number
   currentTimeSeconds: number
   currentDurationSeconds: number
+  volume: number
+  playbackRate: number
   isPlaying: boolean
   queue: QueueItem[]
   queuePosition: number
@@ -52,11 +54,13 @@ export const usePlayerStore = defineStore('player', {
     currentSeekTimeSeconds: 0,
     currentTimeSeconds: 0,
     currentDurationSeconds: 0,
+    volume: 1,
+    playbackRate: 1,
     isPlaying: false,
     queue: [],
     queuePosition: 0,
     audioSourceNode: null,
-    audioContext: new AudioContext(),
+    audioContext: null,
     audioAnalyser: null,
     audioNodeLoaded: false,
   }),
@@ -89,26 +93,36 @@ export const usePlayerStore = defineStore('player', {
     attachEvents() {
       const appStore = useAppStore()
 
-      const attachSourceNode = setInterval(() => {
-        const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
-        if (audioEl) {
-          clearInterval(attachSourceNode)
+      const volumeSetting = localStorage.getItem('volume')
+      if (volumeSetting) {
+        this.volume = parseFloat(volumeSetting)
+      }
 
-          if (!this.audioSourceNode) {
-            audioEl.crossOrigin = 'anonymous'
-            this.audioSourceNode = this.audioContext.createMediaElementSource(audioEl)
-            this.audioAnalyser = this.audioContext.createAnalyser()
-            this.audioAnalyser.fftSize = 512
-            this.audioSourceNode.connect(this.audioAnalyser)
-            this.audioAnalyser.connect(this.audioContext.destination)
-            this.audioNodeLoaded = true
-          }
+      appStore.musicKit.addEventListener('mediaCanPlay', (e: { srcElement: HTMLAudioElement }) => {
+        // when changing songs, apple overrides the volume.
+        // this sets the volume back to the state value
+        console.log('mediaCanPlay', e)
+        e.srcElement.volume = this.volume
+        e.srcElement.playbackRate = this.playbackRate
+      })
+      appStore.musicKit.addEventListener('nowPlayingItemDidChange' as keyof MusicKit.Events, () => {
+        // when changing songs, apple overrides the volume.
+        // this sets the volume back to the state value
+        this.setVolume(this.volume)
+        this.setPlaybackRate(this.playbackRate)
+      })
+
+      appStore.musicKit.addEventListener('mediaElementCreated' as keyof MusicKit.Events, () => {
+        if (!this.audioSourceNode) {
+          this.setupAudioContext()
         }
-      }, 100)
+      })
 
       appStore.musicKit.addEventListener(
         'queuePositionDidChange',
         (e: { position: number; oldPosition: number }) => {
+          console.log('queue pos changeS')
+          this.setVolume(this.volume)
           this.queuePosition = e.position
           this.currentDurationSeconds = this.queue[e.position].durationInSeconds
         },
@@ -118,6 +132,17 @@ export const usePlayerStore = defineStore('player', {
           this.currentTimeSeconds = e.currentPlaybackTime
         }
       })
+    },
+    setupAudioContext() {
+      const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
+      audioEl.crossOrigin = 'anonymous'
+      this.audioContext = new AudioContext()
+      this.audioSourceNode = this.audioContext.createMediaElementSource(audioEl)
+      this.audioAnalyser = this.audioContext.createAnalyser()
+      this.audioAnalyser.fftSize = 512
+      this.audioSourceNode.connect(this.audioAnalyser)
+      this.audioAnalyser.connect(this.audioContext.destination)
+      this.audioNodeLoaded = true
     },
     startSeek(timeInSeconds: number) {
       this.isSeeking = true
@@ -131,6 +156,21 @@ export const usePlayerStore = defineStore('player', {
       const appStore = useAppStore()
       await appStore.musicKit.seekToTime(this.currentSeekTimeSeconds)
       this.stopSeek()
+    },
+    setVolume(volume: number) {
+      const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
+      if (audioEl) {
+        audioEl.volume = volume
+      }
+      this.volume = volume
+      localStorage.setItem('volume', volume.toString())
+    },
+    setPlaybackRate(playbackRate: number) {
+      const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
+      if (audioEl) {
+        audioEl.playbackRate = playbackRate
+      }
+      this.playbackRate = playbackRate
     },
     pause() {
       const appStore = useAppStore()

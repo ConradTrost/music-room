@@ -2,6 +2,7 @@
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref } from 'vue'
+import Skeleton from 'primevue/skeleton'
 
 export type Music = {
   id: string
@@ -49,10 +50,21 @@ const scrollPrev = () => {
     <div class="scrollable-container">
       <div class="scrollable-grid" :style="{ transform: 'translateX(-' + currentScroll + 'px)' }">
         <div v-for="(music, index) in props.content" :key="index" class="grid-item">
-          <img @click="emit('play', { id: music.id, kind: music.kind })" :src="music.imageUrl" />
+          <img
+            @click="emit('play', { id: music.id, kind: music.kind })"
+            :src="music.imageUrl"
+            class="grid-img"
+          />
           <p class="title">{{ music.title }}</p>
           <p class="artist">{{ music.artist || '&nbsp;' }}</p>
         </div>
+        <template v-if="!props.content.length">
+          <div class="grid-item" v-for="i in 5" :key="i">
+            <Skeleton height="100%" class="grid-img"></Skeleton>
+            <Skeleton width="10rem" class="my-1"></Skeleton>
+            <Skeleton width="5rem"></Skeleton>
+          </div>
+        </template>
       </div>
     </div>
     <FontAwesomeIcon
@@ -124,14 +136,14 @@ const scrollPrev = () => {
   aspect-ratio: 1;
   object-fit: contain;
 }
-.grid-item img {
+.grid-item .grid-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   border-radius: 0.3125rem;
 }
-.grid-item img:hover {
+.grid-item .grid-img:hover {
   cursor: pointer;
   transform: scale(1.005);
 }

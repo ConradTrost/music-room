@@ -1,107 +1,75 @@
 <script setup lang="ts">
 import { usePlayerStore } from '@/stores/player'
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed } from 'vue'
 import Slider from 'primevue/slider'
-import { InputNumber } from 'primevue'
+
+import { InputNumber, Button, Menu, useToast } from 'primevue'
 import QueueList from './QueueList.vue'
 import ProgressBar from './ProgressBar.vue'
-import { getAlbumArtwork } from '@/stores/music'
-
-const volume = ref(1)
-const playbackRate = ref(1)
-const visualizer = ref<HTMLCanvasElement | null>(null)
-const isHidden = ref(false)
-
-let ctx: CanvasRenderingContext2D | null = null
-
-const drawLogarithmicFrequency = (frequencyData) => {
-  const width = visualizer.value?.width ?? 0
-  const height = visualizer.value?.height ?? 0
-
-  ctx.clearRect(0, 0, width, height)
-
-  const barCount = 256
-  const barWidth = width / barCount
-
-  for (let i = 0; i < barCount; i++) {
-    const logIndex = Math.pow(i / barCount, 2) * (frequencyData.length - 1)
-    const leftBin = Math.floor(logIndex)
-    const rightBin = Math.ceil(logIndex)
-    const binFraction = logIndex - leftBin
-
-    // Interpolate between bins for smoother transitions
-    const value = (1 - binFraction) * frequencyData[leftBin] + binFraction * frequencyData[rightBin]
-
-    const barHeight = (value / 255) * height // Normalize the bar height
-
-    const colorValue = value / 4
-    ctx.fillStyle = `rgb(${colorValue}, ${colorValue}, ${colorValue})`
-    ctx.fillRect(i * barWidth, height - barHeight, barWidth, barHeight)
-  }
-}
-
-watch(playbackRate, (newRate) => {
-  const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
-  audioEl.playbackRate = newRate
-})
-
-watch(volume, (newVolume) => {
-  const audioEl = document.getElementById('apple-music-player') as HTMLAudioElement
-  audioEl.volume = newVolume
-})
+import { useMusicStore } from '@/stores/music'
+import AlbumImgWithFrequency from './AlbumImgWithFrequency.vue'
 
 const playerStore = usePlayerStore()
+const musicStore = useMusicStore()
 
-onMounted(() => {
-  isHidden.value = true
-  ctx = visualizer.value.getContext('2d')
-
-  // subtracting 40 due to missing high end frequencies
-  const frequencyData = new Uint8Array(playerStore.audioAnalyser.frequencyBinCount - 40) // 256
-
-  const albumImg = document.getElementById('album-cover')
-  console.log(visualizer.value)
-  const updateVisualization = () => {
-    if (visualizer.value) {
-      if (!visualizer.value.width || !visualizer.value.height) {
-        visualizer.value.width = albumImg.clientWidth
-        visualizer.value.height = albumImg.clientHeight / 9
-      }
-      playerStore.audioAnalyser?.getByteFrequencyData(frequencyData) // values between 0 and 255
-
-      drawLogarithmicFrequency(frequencyData)
-    }
-
-    requestAnimationFrame(updateVisualization)
-  }
-
-  updateVisualization()
+const volume = computed({
+  get: () => playerStore.volume,
+  set: (volume) => playerStore.setVolume(volume),
+})
+const playbackRate = computed({
+  get: () => playerStore.playbackRate,
+  set: (playbackRate) => playerStore.setPlaybackRate(playbackRate),
 })
 
-onBeforeUnmount(() => {
-  if (playerStore.audioContext.state !== 'closed') {
-    playerStore.audioContext.close()
-  }
-})
+const menu = ref()
+const toast = useToast()
+const items = ref([
+  {
+    label: 'Add to library',
+    icon: 'fa fa-plus',
+    command: async () => {
+      console.log('hi')
+      const id = playerStore.getNowPlaying.id
+      await musicStore.addToLibrary(id, 'song')
+      toast.add({
+        severity: 'secondary',
+        summary: 'Success',
+        detail: 'Song added to library',
+        life: 5000,
+      })
+    },
+  },
+])
+const toggle = (event) => {
+  menu.value.toggle(event)
+}
 </script>
 
 <template>
-  <div id="player" class="border-l-2 border-black max-w-sm 2xl:max-w-lg">
+  <div id="player" class="border-l-2 border-surface-600 max-w-sm 2xl:max-w-lg">
     <div class="flex flex-col justify-center items-center">
-      <div class="relative image-wrap m-8 mb-4 overflow-hidden" id="beatbox">
-        <canvas
-          class="absolute bottom-0 rounded-lg"
-          ref="visualizer"
-          width="420"
-          height="40"
-        ></canvas>
-        <img
-          id="album-cover"
-          class="rounded-lg"
-          :src="getAlbumArtwork(playerStore.getNowPlaying.artwork, 420)"
-        />
+      <AlbumImgWithFrequency />
+      <div class="grid grid-cols-6 items-center gap-1">
+        <div class="col-span-1"></div>
+        <h3 class="col-span-4">
+          {{ playerStore.getNowPlaying.name }}
+        </h3>
+        <Button @click="toggle" aria-haspopup="true" aria-controls="overlay_menu">
+          <font-awesome-icon
+            class="col-span-1"
+            icon="fa fa-ellipsis-vertical"
+            style="color: #ebebeba3"
+          />
+        </Button>
+        <Menu ref="menu" id="overlay_menu" :model="items" :popup="true">
+          <template #item="{ item, props }">
+            <div v-bind="props.action" :target="item.target">
+              <font-awesome-icon :icon="item.icon" />
+              <span class="ml-2">{{ item.label }}</span>
+            </div>
+          </template>
+        </Menu>
       </div>
-      <h3>{{ playerStore.getNowPlaying.name }}</h3>
       <h4>{{ playerStore.getNowPlaying.artist }}</h4>
       <p>
         {{
@@ -113,7 +81,7 @@ onBeforeUnmount(() => {
       </p>
       <ProgressBar v-if="playerStore.audioNodeLoaded" class="h-16 w-9/12" />
 
-      <div class="controls">
+      <div class="w-3/12 flex items-center justify-between">
         <font-awesome-icon
           class="fa-icon"
           icon="fa fa-backward"
@@ -188,13 +156,6 @@ h3 {
 h4 {
   padding-bottom: 0.5rem;
   color: #ebebeba3;
-}
-.controls {
-  padding-top: 1rem;
-  width: 30%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 .advanced-controls {
   margin-top: 2rem;

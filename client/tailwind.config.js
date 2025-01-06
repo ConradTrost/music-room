@@ -6,8 +6,11 @@ module.exports = {
     './node_modules/primeui/**/*.{vue,js,ts,jsx,tsx}', // Include PrimeVue
   ],
   theme: {
+    colors: {
+      primary: '#fff',
+    },
     extend: {
-      // Customize your Tailwind theme here, if needed
+      backgroundColor: '#fff',
     },
   },
   plugins: [

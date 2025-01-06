@@ -19,6 +19,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@primevue/themes": "^4.2.5",
+    "axios": "^1.7.9",
     "jsonwebtoken": "^9.0.2",
     "pinia": "^2.2.6",
     "primeicons": "^7.0.0",

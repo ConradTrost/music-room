@@ -47,6 +47,7 @@ export const useAppStore = defineStore('app', {
         })
         this.musicKit = window.MusicKit.getInstance()
         this.isUserAuthorized = this.musicKit.isAuthorized || false
+        localStorage.setItem('isUserAuthorized', this.isUserAuthorized.toString())
         console.log('isUserAuthorized:', this.isUserAuthorized)
       } catch (err) {
         console.error('MusicKit configuration failed:', err)
@@ -55,10 +56,12 @@ export const useAppStore = defineStore('app', {
     async loginUser() {
       await this.musicKit.authorize()
       this.isUserAuthorized = true
+      localStorage.setItem('isUserAuthorized', 'true')
     },
     async logoutUser() {
       await this.musicKit.unauthorize()
       this.isUserAuthorized = false
+      localStorage.setItem('isUserAuthorized', 'false')
     },
     async loadMusicKit() {
       await this.loadTokenFromLocalStorage()

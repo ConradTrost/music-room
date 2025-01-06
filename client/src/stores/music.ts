@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
 import { useAppStore } from './app'
 import type {
   MusicData,
@@ -155,6 +156,21 @@ export const useMusicStore = defineStore('music', {
         'v1/catalog/us/genres',
       )) as MusicGenresApiResponse
       this.genres = data.data
+    },
+    async addToLibrary(id: string, type: 'song' | 'album' | 'playlist') {
+      console.log(id)
+      // issues with the music kit post request, therefore directly hitting the api
+      const res = await axios.post(
+        `https://api.music.apple.com/v1/me/library?ids[${type}s]=${id}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('developerToken')}`,
+            'Music-User-Token': localStorage.getItem('music.rkla4zml44.media-user-token'),
+          },
+        },
+      )
+      console.log(res)
     },
   },
 })

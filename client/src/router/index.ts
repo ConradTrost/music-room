@@ -2,10 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
 import PopularView from '@/views/PopularView.vue'
 import RecommendedView from '@/views/RecommendedView.vue'
-import { useAppStore } from '@/stores/app'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  linkActiveClass: 'bg-primary',
   routes: [
     {
       path: '/',
@@ -27,9 +27,9 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to) => {
-  const appStore = useAppStore()
-  if (to.meta.requiresAuth && !appStore.isUserAuthorized) {
+router.beforeEach((to) => {
+  const isUserAuthorized = Boolean(localStorage.getItem('isUserAuthorized'))
+  if (to.meta.requiresAuth && !isUserAuthorized) {
     return { name: 'popular' }
   }
 })

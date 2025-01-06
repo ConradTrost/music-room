@@ -21,10 +21,13 @@ import {
   faGaugeHigh,
   faPlus,
   faMinus,
+  faBars,
+  faEllipsisV,
 } from '@fortawesome/free-solid-svg-icons'
+import { Tooltip } from 'primevue'
+import ToastService from 'primevue/toastservice'
 import App from './App.vue'
 import router from './router'
-import { Tooltip } from 'primevue'
 
 const app = createApp(App)
 
@@ -36,11 +39,12 @@ app.use(PrimeVue, {
     options: {
       cssLayer: {
         name: 'primevue',
-        order: 'tailwind-base, primevue, tailwind-utilities',
+        order: 'tailwind-base, tailwind-components, primevue, tailwind-utilities',
       },
     },
   },
 })
+app.use(ToastService)
 
 library.add(
   faChevronDown,
@@ -57,6 +61,8 @@ library.add(
   faGaugeHigh,
   faPlus,
   faMinus,
+  faBars,
+  faEllipsisV,
 )
 app.component('font-awesome-icon', FontAwesomeIcon)
 app.directive('tooltip', Tooltip)

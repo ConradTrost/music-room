@@ -2,13 +2,13 @@
 import { usePlayerStore } from '@/stores/player'
 import { ref, onMounted } from 'vue'
 
-const visualizer = ref<HTMLCanvasElement | null>(null)
+const wavelengthVisualizer = ref<HTMLCanvasElement | null>(null)
 const isAnimationPaused = ref(true)
 const isMouseDown = ref(false)
 
-const drawWaveform = (ctx: CanvasRenderingContext2D, waveformData: Float32Array<ArrayBuffer>) => {
-  const width = visualizer.value?.width ?? 0
-  const height = visualizer.value?.height ?? 0
+const drawWaveform = (ctx: CanvasRenderingContext2D, waveformData: Float32Array) => {
+  const width = wavelengthVisualizer.value?.width ?? 0
+  const height = wavelengthVisualizer.value?.height ?? 0
 
   ctx.clearRect(0, 0, width, height)
 
@@ -35,25 +35,28 @@ const drawWaveform = (ctx: CanvasRenderingContext2D, waveformData: Float32Array<
 const playerStore = usePlayerStore()
 
 onMounted(() => {
-  const ctx = visualizer.value.getContext('2d')
+  const ctx = wavelengthVisualizer.value.getContext('2d')
 
   const wrapperElem = document.getElementById('progress-wrapper') // change
-  visualizer.value.width = wrapperElem.clientWidth
-  visualizer.value.height = wrapperElem.clientHeight
+  // wavelengthVisualizer.value.width = wrapperElem.clientWidth
+  // wavelengthVisualizer.value.height = wrapperElem.clientHeight
   const waveformData = new Float32Array(playerStore.audioAnalyser.fftSize)
 
   const visualization = () => {
     playerStore.audioAnalyser.getFloatTimeDomainData(waveformData)
 
+    wavelengthVisualizer.value.width = wrapperElem.clientWidth
+    wavelengthVisualizer.value.height = wrapperElem.clientHeight
+
     const progress = playerStore.getProgress
 
-    const gradient = ctx.createLinearGradient(0, 0, visualizer.value?.width ?? 0, 0)
+    const gradient = ctx.createLinearGradient(0, 0, wavelengthVisualizer.value?.width ?? 0, 0)
     gradient.addColorStop(0, '#34d399')
     gradient.addColorStop(progress, '#34d399')
     gradient.addColorStop(progress, '#57534e')
     gradient.addColorStop(1, '#57534e')
 
-    ctx.lineWidth = 6
+    ctx.lineWidth = 4
     ctx.strokeStyle = gradient
 
     drawWaveform(ctx, waveformData)
@@ -99,6 +102,6 @@ const seekTo = (e) => {
     @mouseleave="handleMouseLeave"
     @mouseover="isAnimationPaused = true"
   >
-    <canvas ref="visualizer" id="waveform"></canvas>
+    <canvas ref="wavelengthVisualizer" id="waveform"></canvas>
   </div>
 </template>

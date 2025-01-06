@@ -44,15 +44,30 @@ const items = ref<MenuItem[]>([
 </script>
 
 <template>
-  <Menu :model="items" class="h-screen">
+  <Menu
+    :model="items"
+    class="h-screen pt-2 bg-surface-950 border-r-2 border-surface-600 rounded-none"
+  >
     <template #item="{ item, props }">
-      <RouterLink v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
-        <a :href="href" v-bind="props.action" @click="navigate">
+      <RouterLink v-if="item.route" v-slot="{ isActive, href, navigate }" :to="item.route" custom>
+        <a
+          class="text-surface-300"
+          :class="isActive ? 'bg-surface-800' : ''"
+          :href="href"
+          v-bind="props.action"
+          @click="navigate"
+        >
           <font-awesome-icon :icon="item.icon" />
           <span class="ml-2">{{ item.label }}</span>
         </a>
       </RouterLink>
-      <a v-else :href="item.url" :target="item.target" v-bind="props.action">
+      <a
+        v-else
+        :href="item.url"
+        class="text-surface-300"
+        :target="item.target"
+        v-bind="props.action"
+      >
         <font-awesome-icon :icon="item.icon" />
         <span class="ml-2">{{ appStore.isUserAuthorized ? 'Log out' : 'Log in' }}</span>
       </a>

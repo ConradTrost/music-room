@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { ScrollPanel } from 'primevue'
+import { ScrollPanel, Toast } from 'primevue'
 import NavBar from '@/components/NavBar.vue'
 import { useAppStore } from './stores/app'
 import { onMounted } from 'vue'
@@ -17,7 +17,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex w-screen" v-if="appStore.isMusicKitLoaded">
+  <div class="flex w-screen bg-surface-950" v-if="appStore.isMusicKitLoaded">
     <NavBar />
 
     <ScrollPanel
@@ -34,6 +34,7 @@ onMounted(async () => {
       </div>
     </ScrollPanel>
     <MediaPlayer v-if="playerStore.audioNodeLoaded" class="shrink" />
+    <Toast />
   </div>
 </template>
 
