@@ -1,0 +1,8 @@
+- [ ] Music Continuity - Station playlists likely need to be requested individually in order to continue adding songs.
+- [ ] Queue previous, current, and future seperation
+- [ ] Add vertical ellipsis for each queue item. Functionality should match title functionality.
+- [ ] Album Page
+- [ ] Advanced controls - EQ settings
+- [ ] Add to library only for songs that aren't in users library
+- [ ] Error handling
+- [ ] Ideas for project on ML lyric to sound mapping? Might be difficult with Apple Music.

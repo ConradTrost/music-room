@@ -46,7 +46,7 @@ const items = ref<MenuItem[]>([
 <template>
   <Menu
     :model="items"
-    class="h-screen pt-2 bg-surface-950 border-r-2 border-surface-600 rounded-none"
+    class="h-screen pt-2 bg-surface-950 border-r border-surface-700 rounded-none"
   >
     <template #item="{ item, props }">
       <RouterLink v-if="item.route" v-slot="{ isActive, href, navigate }" :to="item.route" custom>
