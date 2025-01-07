@@ -2,7 +2,7 @@
 
 Not sure where this project is going yet. Currently, it is an integration with Apple Music.
 
-![Website Preview](./docs/gimme-shelter.gif)
+![Website Preview](./docs/bep.gif)
 
 # Usage
 
